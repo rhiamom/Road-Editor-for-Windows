@@ -76,7 +76,7 @@ internal static class Dialogs
         var list = new ListBox
         {
             ItemsSource = installs,
-            SelectedItem = current ?? installs[0],
+            SelectedItem = current ?? (installs.Count > 0 ? installs[0] : null),
             MinWidth = 420,
             MaxHeight = 220,
         };

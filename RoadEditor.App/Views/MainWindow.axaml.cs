@@ -139,8 +139,9 @@ public partial class MainWindow : Window
             if (!ok) return;
         }
 
+        // Pass the current list even when it's empty — the picker's Browse…
+        // button is the entire point of opening it in that case.
         var installs = SimsPaths.AllInstalls();
-        if (installs.Count == 0) { Say("No Sims 2 install found."); return; }
 
         // Figure out which install the current folder belongs to, so the picker
         // starts highlighted on it.

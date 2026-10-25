@@ -32,37 +32,39 @@ namespace LotExpander
         private static string Documents =>
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-        // Priority ordering, most-recent-edition first. If exactly one of these
-        // exists on disk, we use it without asking. If more than one exists,
-        // the UI shows a picker.
-        private static readonly (string Subpath, string DisplayName)[] Candidates = new[]
-        {
-            (@"EA Games\The Sims 2 Legacy Collection",   "The Sims 2 Legacy Collection"),
-            (@"EA Games\The Sims 2 Super Collection",    "The Sims 2 Super Collection"),
-            (@"EA Games\The Sims 2 Ultimate Collection", "The Sims 2 Ultimate Collection"),
-            (@"EA Games\The Sims 2",                     "The Sims 2"),
-        };
-
         /// <summary>
-        /// Returns every Sims 2 install present on disk — auto-detected
-        /// Documents\EA Games\ candidates in priority order, followed by any
-        /// user-added custom paths from AppConfig that still resolve to a
-        /// valid folder with a Neighborhoods subdirectory. Empty list if
-        /// nothing is present.
+        /// Returns every Sims 2 install present on disk. Auto-detection scans
+        /// Documents\EA Games\ for any subfolder that contains a Neighborhoods
+        /// subdirectory — that's inherently a Sims 2 install, regardless of
+        /// edition name or trademark glyphs ("The Sims™ 2", "The Sims™ 2
+        /// Ultimate Collection", "The Sims 2 Legacy Collection", etc.).
+        /// User-added custom paths from AppConfig follow. Empty list if
+        /// nothing qualifies.
         /// </summary>
         public static IReadOnlyList<SimsInstall> AllInstalls()
         {
             var found = new List<SimsInstall>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var (sub, display) in Candidates)
+            string eaGames = Path.Combine(Documents, "EA Games");
+            if (Directory.Exists(eaGames))
             {
-                string user = Path.Combine(Documents, sub);
-                if (!Directory.Exists(user)) continue;
-                string nb = Path.Combine(user, "Neighborhoods");
-                if (!Directory.Exists(nb)) continue;
-                if (!seen.Add(user)) continue;
-                found.Add(new SimsInstall(display, user, nb));
+                string[] subdirs;
+                try { subdirs = Directory.GetDirectories(eaGames); }
+                catch { subdirs = Array.Empty<string>(); }
+
+                // Alphabetical for a stable order in the picker.
+                Array.Sort(subdirs, StringComparer.OrdinalIgnoreCase);
+
+                foreach (string user in subdirs)
+                {
+                    string nb = Path.Combine(user, "Neighborhoods");
+                    if (!Directory.Exists(nb)) continue;
+                    if (!seen.Add(user)) continue;
+                    string name = Path.GetFileName(user.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                    if (string.IsNullOrEmpty(name)) name = user;
+                    found.Add(new SimsInstall(name, user, nb));
+                }
             }
 
             foreach (string custom in AppConfig.Load().CustomInstalls)
