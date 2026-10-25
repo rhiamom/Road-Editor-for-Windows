@@ -8,6 +8,8 @@
 
 using Avalonia.Controls;
 using Avalonia.Layout;
+using LotExpander;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace RoadEditor.App.Views;
@@ -60,4 +62,73 @@ internal static class Dialogs
         Avalonia.Threading.Dispatcher.UIThread
             .InvokeAsync(() => Confirm(owner, title, message))
             .GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Shows a modal that lets the user pick which Sims 2 install Road Editor
+    /// should work against. Returns the chosen install, or null if the user
+    /// cancelled. Cancel is treated as "don't change anything" by the caller.
+    /// </summary>
+    public static async Task<SimsInstall?> PickInstall(Window owner, IReadOnlyList<SimsInstall> installs, SimsInstall? current)
+    {
+        var tcs = new TaskCompletionSource<SimsInstall?>();
+
+        var list = new ListBox
+        {
+            ItemsSource = installs,
+            SelectedItem = current ?? installs[0],
+            MinWidth = 420,
+            MaxHeight = 220,
+        };
+        list.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<SimsInstall>((inst, _) =>
+            new StackPanel
+            {
+                Margin = new Avalonia.Thickness(4),
+                Children =
+                {
+                    new TextBlock { Text = inst!.DisplayName, FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                    new TextBlock { Text = inst.UserFolder, Opacity = 0.65, FontSize = 11 },
+                },
+            });
+
+        var ok = new Button { Content = "Use this install", IsDefault = true, MinWidth = 140 };
+        var cancel = new Button { Content = "Cancel", MinWidth = 90 };
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 10,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Children = { cancel, ok },
+        };
+
+        var win = new Window
+        {
+            Title = "Which Sims 2 install?",
+            SizeToContent = SizeToContent.WidthAndHeight,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            Content = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(20),
+                Spacing = 12,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = "Road Editor found more than one Sims 2 install under your Documents folder. Pick the one you want to edit:",
+                        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                        MaxWidth = 420,
+                    },
+                    list,
+                    buttons,
+                },
+            },
+        };
+
+        ok.Click += (_, _) => { tcs.TrySetResult(list.SelectedItem as SimsInstall); win.Close(); };
+        cancel.Click += (_, _) => { tcs.TrySetResult(null); win.Close(); };
+        win.Closed += (_, _) => tcs.TrySetResult(null);
+
+        await win.ShowDialog(owner);
+        return await tcs.Task;
+    }
 }

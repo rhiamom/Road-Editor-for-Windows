@@ -46,6 +46,9 @@
       <Button Name="ZoomIn" Content="+" Width="34"/>
       <Border Width="14"/>
       <Button Name="SaveButton" Content="Save" MinWidth="80" IsEnabled="False"/>
+      <Border Width="14"/>
+      <Button Name="InstallButton" Content="Install…" MinWidth="80"
+              ToolTip.Tip="Switch to a different Sims 2 install (if you have more than one)."/>
     </StackPanel>
 
     <Border Grid.Row="1" Grid.Column="2" BorderBrush="#c8c6be" BorderThickness="1">

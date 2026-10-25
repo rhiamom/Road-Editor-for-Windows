@@ -34,7 +34,7 @@ public partial class MainWindow : Window
         AvaloniaXamlLoader.Load(this);
         _map = this.Get<MapView>("Map");
 
-        Opened += (_, _) => LoadNeighborhoods();
+        Opened += async (_, _) => await EnsureInstallPickedAsync();
         this.Get<ListBox>("Hoods").SelectionChanged += HoodSelected;
         this.Get<ToggleButton>("DrawTool").Click += (_, _) => SetTool(Tool.Draw);
         this.Get<ToggleButton>("EraseTool").Click += (_, _) => SetTool(Tool.Erase);
@@ -43,6 +43,7 @@ public partial class MainWindow : Window
         this.Get<Button>("ZoomIn").Click += (_, _) => _map.Scale += 1;
         this.Get<Button>("ZoomOut").Click += (_, _) => _map.Scale -= 1;
         this.Get<Button>("SaveButton").Click += SaveClick;
+        this.Get<Button>("InstallButton").Click += async (_, _) => await SwitchInstallAsync();
 
         _map.Edited += Refresh;
         _map.Refused += why => Say(why);
@@ -90,6 +91,71 @@ public partial class MainWindow : Window
         if (_doc.IsRoad(x, y)) what = "road · " + what;
         if (_doc.BridgeAt(x, y) is { } br) what = $"bridge, deck {br.Deck:F1}";
         text.Text = $"{x}, {y} · height {_doc.Terrain[y, x]:F1} · rise {_doc.Rise(x, y):F1} · {what}";
+    }
+
+    // ---- installs ------------------------------------------------------
+
+    /// <summary>
+    /// On launch: if there's a single install (or a persisted choice), load
+    /// its neighborhoods immediately. If multiple installs are present and
+    /// no choice is saved, prompt. If none, show empty state.
+    /// </summary>
+    private async System.Threading.Tasks.Task EnsureInstallPickedAsync()
+    {
+        var installs = SimsPaths.AllInstalls();
+        if (installs.Count == 0)
+        {
+            Say("No Sims 2 install found under My Documents\\EA Games.");
+            this.Get<Button>("InstallButton").IsEnabled = false;
+            return;
+        }
+
+        this.Get<Button>("InstallButton").IsEnabled = installs.Count > 1;
+
+        if (SimsPaths.NeighborhoodsFolder == null)
+        {
+            // Multiple installs, no saved pick — ask.
+            var chosen = await Dialogs.PickInstall(this, installs, null);
+            if (chosen == null)
+            {
+                Say("No install chosen. Click \"Install…\" to pick one.");
+                return;
+            }
+            SimsPaths.Select(chosen);
+        }
+
+        LoadNeighborhoods();
+    }
+
+    private async System.Threading.Tasks.Task SwitchInstallAsync()
+    {
+        if (_doc?.Dirty == true)
+        {
+            bool ok = await Dialogs.Confirm(this, "Discard unsaved changes?",
+                "The current neighborhood has unsaved road changes. Switching installs will lose them.");
+            if (!ok) return;
+        }
+
+        var installs = SimsPaths.AllInstalls();
+        if (installs.Count == 0) { Say("No Sims 2 install found."); return; }
+
+        // Figure out which install the current folder belongs to, so the picker
+        // starts highlighted on it.
+        string? currentFolder = SimsPaths.UserFolder;
+        SimsInstall? currentInstall = null;
+        foreach (var i in installs)
+            if (string.Equals(i.UserFolder, currentFolder, StringComparison.OrdinalIgnoreCase))
+                { currentInstall = i; break; }
+
+        var chosen = await Dialogs.PickInstall(this, installs, currentInstall);
+        if (chosen == null || chosen.UserFolder == currentFolder) return;
+
+        SimsPaths.Select(chosen);
+        _doc = null;
+        _current = null;
+        _map.Document = null;
+        LoadNeighborhoods();
+        Refresh();
     }
 
     // ---- neighborhoods -------------------------------------------------
