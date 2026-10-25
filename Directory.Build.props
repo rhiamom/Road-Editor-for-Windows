@@ -6,6 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591;NU1701</NoWarn>
+    <Version>1.1.0</Version>
+    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
     <Authors>GramzeSweatshop (rhiamom@mac.com)</Authors>
     <Copyright>Road Editor © 2026 GramzeSweatshop; neighborhood file handlers © 2008–2010 Mootilda; SimPE © 2004–2007 Ambertation (Quaxi). GPL v2 or later.</Copyright>
   </PropertyGroup>
