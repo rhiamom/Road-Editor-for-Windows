@@ -44,21 +44,71 @@ namespace LotExpander
         };
 
         /// <summary>
-        /// Returns every Sims 2 install present on disk, in priority order.
-        /// Empty list if nothing found.
+        /// Returns every Sims 2 install present on disk — auto-detected
+        /// Documents\EA Games\ candidates in priority order, followed by any
+        /// user-added custom paths from AppConfig that still resolve to a
+        /// valid folder with a Neighborhoods subdirectory. Empty list if
+        /// nothing is present.
         /// </summary>
         public static IReadOnlyList<SimsInstall> AllInstalls()
         {
             var found = new List<SimsInstall>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var (sub, display) in Candidates)
             {
                 string user = Path.Combine(Documents, sub);
                 if (!Directory.Exists(user)) continue;
                 string nb = Path.Combine(user, "Neighborhoods");
                 if (!Directory.Exists(nb)) continue;
+                if (!seen.Add(user)) continue;
                 found.Add(new SimsInstall(display, user, nb));
             }
+
+            foreach (string custom in AppConfig.Load().CustomInstalls)
+            {
+                if (string.IsNullOrWhiteSpace(custom) || !Directory.Exists(custom)) continue;
+                string nb = Path.Combine(custom, "Neighborhoods");
+                if (!Directory.Exists(nb)) continue;
+                if (!seen.Add(custom)) continue;
+                string name = Path.GetFileName(custom.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                if (string.IsNullOrEmpty(name)) name = custom;
+                found.Add(new SimsInstall(name + " (custom)", custom, nb));
+            }
+
             return found;
+        }
+
+        /// <summary>
+        /// Validates that <paramref name="userFolder"/> looks like a Sims 2
+        /// user folder (exists and has a Neighborhoods subdirectory), adds
+        /// it to the persisted custom-installs list if so, and returns the
+        /// resulting SimsInstall. Throws DirectoryNotFoundException if the
+        /// path doesn't qualify. Duplicate paths are a no-op.
+        /// </summary>
+        public static SimsInstall AddCustomInstall(string userFolder)
+        {
+            if (string.IsNullOrWhiteSpace(userFolder) || !Directory.Exists(userFolder))
+                throw new DirectoryNotFoundException("The chosen folder does not exist.");
+
+            string nb = Path.Combine(userFolder, "Neighborhoods");
+            if (!Directory.Exists(nb))
+                throw new DirectoryNotFoundException("The chosen folder has no \"Neighborhoods\" subdirectory. Pick the Sims 2 user folder (the one that contains Neighborhoods, Downloads, etc.), not the folder above or below it.");
+
+            var cfg = AppConfig.Load();
+            bool already = false;
+            foreach (string existing in cfg.CustomInstalls)
+                if (string.Equals(existing, userFolder, StringComparison.OrdinalIgnoreCase))
+                    { already = true; break; }
+            if (!already)
+            {
+                cfg.CustomInstalls.Add(userFolder);
+                cfg.Save();
+            }
+
+            string name = Path.GetFileName(userFolder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            if (string.IsNullOrEmpty(name)) name = userFolder;
+            return new SimsInstall(name + " (custom)", userFolder, nb);
         }
 
         /// <summary>

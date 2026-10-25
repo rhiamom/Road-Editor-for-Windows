@@ -8,6 +8,7 @@
 
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Platform.Storage;
 using LotExpander;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -91,13 +92,14 @@ internal static class Dialogs
             });
 
         var ok = new Button { Content = "Use this install", IsDefault = true, MinWidth = 140 };
+        var browse = new Button { Content = "Browse…", MinWidth = 90 };
         var cancel = new Button { Content = "Cancel", MinWidth = 90 };
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 10,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { cancel, ok },
+            Children = { browse, cancel, ok },
         };
 
         var win = new Window
@@ -114,7 +116,7 @@ internal static class Dialogs
                 {
                     new TextBlock
                     {
-                        Text = "Road Editor found more than one Sims 2 install under your Documents folder. Pick the one you want to edit:",
+                        Text = "Pick which Sims 2 user folder Road Editor should work against. Click Browse… to add an install from a non-standard location (the user folder, the one that contains Neighborhoods).",
                         TextWrapping = Avalonia.Media.TextWrapping.Wrap,
                         MaxWidth = 420,
                     },
@@ -126,6 +128,32 @@ internal static class Dialogs
 
         ok.Click += (_, _) => { tcs.TrySetResult(list.SelectedItem as SimsInstall); win.Close(); };
         cancel.Click += (_, _) => { tcs.TrySetResult(null); win.Close(); };
+        browse.Click += async (_, _) =>
+        {
+            var folders = await win.StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions
+            {
+                Title = "Pick a Sims 2 user folder (contains Neighborhoods)",
+                AllowMultiple = false,
+            });
+            if (folders == null || folders.Count == 0) return;
+            string? path = folders[0].TryGetLocalPath();
+            if (string.IsNullOrEmpty(path)) return;
+
+            SimsInstall added;
+            try { added = SimsPaths.AddCustomInstall(path); }
+            catch (System.IO.DirectoryNotFoundException ex)
+            {
+                await Message(win, "Not a Sims 2 user folder", ex.Message);
+                return;
+            }
+
+            // Rebuild the list including the new one, and select it.
+            var updated = new List<SimsInstall>(SimsPaths.AllInstalls());
+            list.ItemsSource = updated;
+            foreach (var i in updated)
+                if (string.Equals(i.UserFolder, added.UserFolder, System.StringComparison.OrdinalIgnoreCase))
+                    { list.SelectedItem = i; break; }
+        };
         win.Closed += (_, _) => tcs.TrySetResult(null);
 
         await win.ShowDialog(owner);

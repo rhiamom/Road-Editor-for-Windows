@@ -102,15 +102,18 @@ public partial class MainWindow : Window
     /// </summary>
     private async System.Threading.Tasks.Task EnsureInstallPickedAsync()
     {
+        // Install… stays enabled even with zero or one install present: the
+        // picker's Browse… button lets the player add a custom location, so
+        // "no installs" and "one install" are both valid starting points
+        // from which to add another.
+        this.Get<Button>("InstallButton").IsEnabled = true;
+
         var installs = SimsPaths.AllInstalls();
         if (installs.Count == 0)
         {
-            Say("No Sims 2 install found under My Documents\\EA Games.");
-            this.Get<Button>("InstallButton").IsEnabled = false;
+            Say("No Sims 2 install found. Click \"Install…\" to add one from a custom location.");
             return;
         }
-
-        this.Get<Button>("InstallButton").IsEnabled = installs.Count > 1;
 
         if (SimsPaths.NeighborhoodsFolder == null)
         {

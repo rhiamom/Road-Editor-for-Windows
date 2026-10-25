@@ -5,6 +5,7 @@
  ***************************************************************************/
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -19,6 +20,14 @@ namespace LotExpander
     public sealed class AppConfig
     {
         public string? SelectedUserFolder { get; set; }
+
+        /// <summary>
+        /// User-added install locations (full paths to the user folder, the
+        /// one that contains a Neighborhoods subdirectory). Lets a player
+        /// point Road Editor at a Sims 2 install that isn't in the standard
+        /// Documents\EA Games\&lt;edition&gt; layout.
+        /// </summary>
+        public List<string> CustomInstalls { get; set; } = new();
 
         private static string Folder =>
             Path.Combine(
