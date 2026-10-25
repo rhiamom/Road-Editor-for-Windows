@@ -65,8 +65,16 @@ namespace RoadEditor.Engine
         public const int PieceOffset = 112;
         public const ushort End = 0x0AC0, Straight = 0x0AC1, Arch2 = 0x0AC2, Arch1 = 0x0AC3, Pylon = 0x0AC4;
 
-        /// <summary>Shortest bridge Maxis ever builds: End, one full span, End = 7 pieces.</summary>
-        public const int MinSquares = 14;
+        /// <summary>
+        /// Shortest bridge Road Editor will build: End + Arch1 + Arch1 + End
+        /// = 4 pieces × 2 squares = 8 squares. Maxis's shortest is 14 (always
+        /// keeps a full Arch1/Arch2 pair plus a Straight), 12 (drop the
+        /// Straight) is player-verified in-game, and 8 (drop Arch2 too) is
+        /// the next step down — two End pieces with one Arch1 each meeting at
+        /// the top. If a loader/render issue surfaces for 8-square bridges,
+        /// bump back to 12.
+        /// </summary>
+        public const int MinSquares = 8;
 
         public static string Name(ushort piece) => piece switch
         {
@@ -77,6 +85,17 @@ namespace RoadEditor.Engine
         /// <summary>The piece sequence for a bridge of <paramref name="pieces"/> pieces, with its rising/falling half.</summary>
         public static List<(ushort piece, bool falling)> Sequence(int pieces)
         {
+            // 4-piece micro bridge: no Arch2, no Straight. End + Arch1 (rising)
+            // meets Arch1 (falling) + End at the arches' top edge. Shorter than
+            // anything the normal span math can produce, so handle it before
+            // falling into the Arch1/Arch2/Straight pattern below.
+            if (pieces == 4)
+                return new List<(ushort, bool)>
+                {
+                    (End, false), (Arch1, false),
+                    (Arch1, true), (End, true),
+                };
+
             int m = pieces - 2;
             int spans = Math.Max(1, (m + 1) / 6);
             int straights = m - 5 * spans + 1;                  // shared out over the spans, middle ones first
