@@ -1,0 +1,62 @@
+<!--
+  Road Editor for Windows
+  © 2026 GramzeSweatshop (rhiamom@mac.com). Written with Claude
+  GPL v2 or later. See Licences/GPL-LICENSE.txt
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:RoadEditor.App.Views"
+        x:Class="RoadEditor.App.Views.MainWindow"
+        Title="Road Editor for Windows" Width="1040" Height="800" MinWidth="820" MinHeight="600">
+
+  <Grid Margin="14" ColumnDefinitions="240,14,*" RowDefinitions="Auto,*,Auto">
+
+    <!-- Left: neighborhoods and legend -->
+    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4" Margin="0,0,0,10">
+      <TextBlock Text="Road Editor" FontSize="19" FontWeight="SemiBold"/>
+      <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="12"
+                 Text="Pick a neighborhood, then drag on the map to draw or erase roads. Close the game before saving."/>
+    </StackPanel>
+
+    <DockPanel Grid.Row="1" Grid.Column="0">
+      <StackPanel DockPanel.Dock="Bottom" Spacing="5" Margin="0,12,0,0">
+        <TextBlock Text="Key" FontWeight="SemiBold"/>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#3a3a3e"/><TextBlock Text="Road" FontSize="12"/></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#5a4828"/><TextBlock Text="Road in front of a lot" FontSize="12"/></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#f0c83c"/><TextBlock Text="Lot front with no road" FontSize="12"/></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#96781e"/><TextBlock Text="Lot front too steep for a road" FontSize="12"/></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#c4403a"/><TextBlock Text="Lot" FontSize="12"/></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#3468ba"/><TextBlock Text="Water" FontSize="12"/></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#968064"/><TextBlock Text="Bridge" FontSize="12"/></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#4a6a36"/><TextBlock Text="Too steep for a road" FontSize="12"/></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8"><Border Width="14" Height="14" Background="#e65a1e"/><TextBlock Text="Road that connects to nothing" FontSize="12"/></StackPanel>
+      </StackPanel>
+      <ListBox Name="Hoods"/>
+    </DockPanel>
+
+    <!-- Right: tools, map -->
+    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10" VerticalAlignment="Bottom">
+      <ToggleButton Name="DrawTool" Content="Draw" IsChecked="True" MinWidth="70"/>
+      <ToggleButton Name="EraseTool" Content="Erase" MinWidth="70"/>
+      <ToggleButton Name="BridgeTool" Content="Bridge" MinWidth="70"
+                    ToolTip.Tip="Drag from a road on one bank straight across to the road on the other. Erase on any bridge square removes the whole bridge."/>
+      <Button Name="UndoButton" Content="Undo" MinWidth="70" IsEnabled="False"/>
+      <Border Width="14"/>
+      <Button Name="ZoomOut" Content="−" Width="34"/>
+      <Button Name="ZoomIn" Content="+" Width="34"/>
+      <Border Width="14"/>
+      <Button Name="SaveButton" Content="Save" MinWidth="80" IsEnabled="False"/>
+    </StackPanel>
+
+    <Border Grid.Row="1" Grid.Column="2" BorderBrush="#c8c6be" BorderThickness="1">
+      <ScrollViewer Name="Viewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <v:MapView Name="Map" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+      </ScrollViewer>
+    </Border>
+
+    <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
+      <TextBlock Grid.Column="0" Name="Status" Opacity="0.8" TextTrimming="CharacterEllipsis"/>
+      <TextBlock Grid.Column="1" Name="Hover" Opacity="0.6" FontSize="12" Margin="16,0,0,0"/>
+    </Grid>
+  </Grid>
+</Window>

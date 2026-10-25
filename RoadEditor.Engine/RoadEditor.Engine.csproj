@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>RoadEditor.Engine</AssemblyName>
+    <RootNamespace>RoadEditor.Engine</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Filetypes\Filetypes.csproj" />
+  </ItemGroup>
+</Project>

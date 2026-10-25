@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>RoadEditor.SmokeTest</AssemblyName>
+    <RootNamespace>RoadEditor.SmokeTest</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RoadEditor.Engine\RoadEditor.Engine.csproj" />
+  </ItemGroup>
+</Project>

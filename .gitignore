@@ -1,0 +1,9 @@
+*.user
+.DS_Store
+bin/
+build/*.app
+build/*.dmg
+build/dmgstage/
+build/stage/
+dist/
+obj/

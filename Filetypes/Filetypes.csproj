@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Filetypes</AssemblyName>
+    <RootNamespace>Filetypes</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Legacy code: predates C# nullable refs. The sources came from a
+         2007-2013 codebase and use a "set fields in Decode/Load" pattern
+         that the nullability analyzer can't see through. -->
+    <Nullable>disable</Nullable>
+    <!-- CS8981: lower-case type name "data" (legacy)
+         CA1416: System.Drawing.Bitmap is Windows-only at the analyzer
+         level; works on macOS via libgdiplus until we migrate to SKBitmap. -->
+    <NoWarn>$(NoWarn);CS8981;CA1416</NoWarn>
+    <!-- System.Drawing.Common is referenced transitively via SimPE.Helper. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+  </ItemGroup>
+
+  <!--
+    The SimPe.* / DatGen.* namespace surface used by the Clean Installer is
+    vendored locally in _SimPeStubs.cs and DatGenStubs.cs. Those stubs are
+    cross-platform (net8.0) and avoid the WinForms / net8.0-windows TFM of
+    SimPE-Fixed, so the installer builds natively on macOS. If the optional
+    Remove Furniture install path is ever wired up, port the real DBPF
+    parser (SimPE.Packages.GeneratableFile and friends) into this assembly.
+  -->
+
+
+  <ItemGroup>
+    <Compile Remove="bin\**" />
+    <Compile Remove="obj\**" />
+  </ItemGroup>
+</Project>
